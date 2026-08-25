@@ -1,32 +1,42 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayLayer.hpp>
+#include <Geode/modify/PlayerObject.hpp>
 #include <Geode/modify/PauseLayer.hpp>
 #include "MacroState.hpp"
 #include "MacroPopup.hpp"
 
 using namespace geode::prelude;
 
+// pushButton/releaseButton appartiennent a PlayerObject (chaque joueur a son
+// propre objet), pas a PlayLayer. On determine si c'est le joueur 1 ou 2 en
+// comparant l'objet a PlayLayer::m_player1.
+class $modify(MacroPlayerObject, PlayerObject) {
+    void pushButton(PlayerButton button) {
+        auto& state = MacroState::get();
+        if (state.recording) {
+            auto pl = PlayLayer::get();
+            bool isPlayer1 = !pl || this == pl->m_player1;
+            state.record(button, isPlayer1, true);
+        }
+        PlayerObject::pushButton(button);
+    }
+
+    void releaseButton(PlayerButton button) {
+        auto& state = MacroState::get();
+        if (state.recording) {
+            auto pl = PlayLayer::get();
+            bool isPlayer1 = !pl || this == pl->m_player1;
+            state.record(button, isPlayer1, false);
+        }
+        PlayerObject::releaseButton(button);
+    }
+};
+
 class $modify(MacroPlayLayer, PlayLayer) {
     bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
         if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
         MacroState::get().resetCounters();
         return true;
-    }
-
-    void pushButton(PlayerButton button, bool isPlayer1) {
-        auto& state = MacroState::get();
-        if (state.recording) {
-            state.record(button, isPlayer1, true);
-        }
-        GJBaseGameLayer::pushButton(button, isPlayer1);
-    }
-
-    void releaseButton(PlayerButton button, bool isPlayer1) {
-        auto& state = MacroState::get();
-        if (state.recording) {
-            state.record(button, isPlayer1, false);
-        }
-        GJBaseGameLayer::releaseButton(button, isPlayer1);
     }
 
     void resetLevel() {
@@ -43,10 +53,13 @@ class $modify(MacroPlayLayer, PlayLayer) {
                 state.actions[state.playbackIndex].frame == state.frame
             ) {
                 auto& action = state.actions[state.playbackIndex];
-                if (action.pressed) {
-                    GJBaseGameLayer::pushButton(action.button, action.isPlayer1);
-                } else {
-                    GJBaseGameLayer::releaseButton(action.button, action.isPlayer1);
+                auto target = action.isPlayer1 ? this->m_player1 : this->m_player2;
+                if (target) {
+                    if (action.pressed) {
+                        target->pushButton(action.button);
+                    } else {
+                        target->releaseButton(action.button);
+                    }
                 }
                 state.playbackIndex++;
             }
@@ -68,7 +81,7 @@ class $modify(MacroPlayLayer, PlayLayer) {
     }
 
     // Raccourcis clavier gardes comme filet de secours (PC uniquement, ignores sur Android)
-    void keyDown(cocos2d::enumKeyCodes key) {
+    void keyDown(cocos2d::enumKeyCodes key, double timeStamp) {
         auto& state = MacroState::get();
 
         switch (key) {
@@ -88,7 +101,7 @@ class $modify(MacroPlayLayer, PlayLayer) {
                 break;
         }
 
-        PlayLayer::keyDown(key);
+        PlayLayer::keyDown(key, timeStamp);
     }
 };
 
