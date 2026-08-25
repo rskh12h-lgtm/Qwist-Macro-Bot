@@ -8,7 +8,7 @@
     "version": "v1.0.7",
     "id": "com.qwist.macro",
     "name": "Qwist Macro",
-    "developer": "YourName",
+    "developer": "Riski",
     "description": "Enregistre et rejoue des macros d'inputs dans Geometry Dash.",
     "dependencies": {},
     "settings": {
