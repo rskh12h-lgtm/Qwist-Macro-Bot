@@ -1,11 +1,11 @@
 {
-    "geode": ">=v5.0.0",
+    "geode": "5.9.0",
     "gd": {
         "win": "2.2081",
         "android": "2.2081",
         "mac": "2.2081"
     },
-    "version": "v1.0.7",
+    "version": "v1.0.8",
     "id": "com.qwist.macro",
     "name": "Qwist Macro",
     "developer": "Riski",
