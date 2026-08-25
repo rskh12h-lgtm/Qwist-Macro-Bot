@@ -25,10 +25,14 @@ public:
     std::vector<MacroAction> actions;
     std::string lastName = "last";
     bool loop = false;
+    bool autoSave = true;
+    float tps = 240.f;
+    float accumulator = 0.f;
 
     void resetCounters() {
         frame = 0;
         playbackIndex = 0;
+        accumulator = 0.f;
     }
 
     void startRecording() {
@@ -41,10 +45,19 @@ public:
 
     void stopRecording() {
         recording = false;
-        Notification::create(
-            fmt::format("Enregistrement termine ({} actions)", actions.size()),
-            NotificationIcon::Success
-        )->show();
+
+        if (autoSave && !actions.empty()) {
+            saveToDisk(lastName);
+            Notification::create(
+                fmt::format("Enregistrement termine ({} actions, sauvegarde auto)", actions.size()),
+                NotificationIcon::Success
+            )->show();
+        } else {
+            Notification::create(
+                fmt::format("Enregistrement termine ({} actions)", actions.size()),
+                NotificationIcon::Success
+            )->show();
+        }
     }
 
     void startPlayback() {
@@ -67,11 +80,18 @@ public:
     }
 
     void save(std::string const& name) {
+        if (!saveToDisk(name)) {
+            Notification::create("Echec de la sauvegarde", NotificationIcon::Error)->show();
+            return;
+        }
+        Notification::create("Macro sauvegarde", NotificationIcon::Success)->show();
+    }
+
+    bool saveToDisk(std::string const& name) {
         auto path = Mod::get()->getSaveDir() / (name + ".macro");
         std::ofstream file(path, std::ios::binary);
         if (!file.is_open()) {
-            Notification::create("Echec de la sauvegarde", NotificationIcon::Error)->show();
-            return;
+            return false;
         }
         size_t count = actions.size();
         file.write(reinterpret_cast<const char*>(&count), sizeof(count));
@@ -79,7 +99,7 @@ public:
             file.write(reinterpret_cast<const char*>(&a), sizeof(MacroAction));
         }
         lastName = name;
-        Notification::create("Macro sauvegarde", NotificationIcon::Success)->show();
+        return true;
     }
 
     bool load(std::string const& name) {
