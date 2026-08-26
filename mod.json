@@ -5,11 +5,11 @@
         "android": "2.2081",
         "mac": "2.2081"
     },
-    "version": "v1.0.11",
+    "version": "v1.0.13",
     "id": "com.qwist.macro",
     "name": "Qwist Macro",
     "developer": "Riski",
-    "description": "Enregistre et rejoue des macros d'inputs dans Geometry Dash.",
+    "description": "The new best macro bot for mobile player.",
     "dependencies": {},
     "settings": {
         "render-title": {
